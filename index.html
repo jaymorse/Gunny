@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gunnison Basin — Fishing Conditions</title>
+<meta name="description" content="Live streamflow, water temperature and weather for the Gunnison Basin, Colorado. Real-time USGS and NWS data for anglers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg1:#0B1120;--bg2:#0F1B2D;--bg3:#1B2B40;--line:#22344C;
+  --teal:#0EA5A0;--tealL:#2DD4BF;--blue:#38BDF8;
+  --w:#F1F5F9;--g3:#CBD5E1;--g4:#94A3B8;--g5:#64748B;
+  --good:#34D399;--ok:#FBBF24;--warn:#F59E0B;--bad:#F87171;
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;--max:1180px;
+}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(1200px 600px at 70% -10%,rgba(56,189,248,0.08),transparent 60%),var(--bg1);font-family:var(--font);color:var(--g3);line-height:1.6;min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+
+/* Header */
+header{padding:44px 0 24px;border-bottom:1px solid var(--line)}
+.head-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.badge{display:inline-block;background:rgba(14,165,160,0.15);color:var(--tealL);border:1px solid rgba(45,212,191,0.3);padding:4px 14px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
+h1{font-size:clamp(28px,5vw,44px);font-weight:800;color:var(--w);line-height:1.05;letter-spacing:-1.5px}
+.subtitle{font-size:clamp(14px,2vw,17px);color:var(--g4);margin-top:8px;max-width:560px}
+.refresh-box{display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-size:12px;color:var(--g5);font-family:var(--mono)}
+.refresh-box .updated{white-space:nowrap}
+.refresh-box .updated b{color:var(--tealL);font-weight:600}
+button.refresh{background:var(--bg3);color:var(--g3);border:1px solid var(--line);border-radius:8px;padding:8px 16px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+button.refresh:hover{border-color:var(--teal);color:var(--w)}
+button.refresh:disabled{opacity:.5;cursor:wait}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--g5);border-top-color:var(--tealL);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:20px;font-size:12px;color:var(--g4)}
+.legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.dot.good{background:var(--good)}.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}.dot.na{background:var(--g5)}
+
+/* Sections */
+section{padding:36px 0}
+.sec-title{font-size:13px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* River grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--line);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-3px);border-color:var(--teal)}
+.card .stripe{position:absolute;top:0;left:0;width:4px;height:100%}
+.stripe.good{background:var(--good)}.stripe.ok{background:var(--ok)}.stripe.warn{background:var(--warn)}.stripe.bad{background:var(--bad)}.stripe.na{background:var(--g5)}
+.card .cname{font-size:16px;font-weight:700;color:var(--w);line-height:1.25}
+.card .csec{font-size:11px;color:var(--g5);text-transform:uppercase;letter-spacing:1.2px;margin-top:3px}
+.statusbadge{position:absolute;top:18px;right:18px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:6px}
+.sb.good{background:rgba(52,211,153,.14);color:var(--good)}
+.sb.ok{background:rgba(251,191,36,.14);color:var(--ok)}
+.sb.warn{background:rgba(245,158,11,.16);color:var(--warn)}
+.sb.bad{background:rgba(248,113,113,.16);color:var(--bad)}
+.sb.na{background:rgba(100,116,139,.16);color:var(--g4)}
+
+.flowline{display:flex;align-items:baseline;gap:8px;margin:16px 0 4px}
+.flowline .big{font-size:38px;font-weight:800;color:var(--w);font-family:var(--mono);line-height:1}
+.flowline .unit{font-size:13px;color:var(--g4);font-weight:500}
+.trend{font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin-left:auto}
+.trend.up{color:var(--warn)}.trend.down{color:var(--blue)}.trend.steady{color:var(--g4)}
+
+.spark{width:100%;height:40px;margin:10px 0 14px;display:block}
+.spark path.area{fill:rgba(45,212,191,.10)}
+.spark path.line{fill:none;stroke:var(--tealL);stroke-width:1.6}
+
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.metric .ml{font-size:10px;color:var(--g5);text-transform:uppercase;letter-spacing:1px}
+.metric .mv{font-size:15px;color:var(--w);font-weight:600;font-family:var(--mono);margin-top:2px}
+.metric .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:middle}
+.note{font-size:12px;color:var(--g4);margin-top:13px;line-height:1.45}
+
+/* Weather */
+.weather{display:grid;grid-template-columns:minmax(220px,260px) 1fr;gap:18px}
+.wnow{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center}
+.wnow .temp{font-size:54px;font-weight:800;color:var(--w);font-family:var(--mono);line-height:1}
+.wnow .cond{font-size:14px;color:var(--g3);margin-top:6px}
+.wnow .place{font-size:11px;color:var(--g5);text-transform:uppercase;letter-spacing:1.5px;margin-top:14px}
+.wfore{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-content:start}
+.wcell{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px}
+.wcell .wname{font-size:12px;font-weight:700;color:var(--w)}
+.wcell .wtemp{font-size:20px;font-weight:700;color:var(--tealL);font-family:var(--mono);margin:4px 0}
+.wcell .wtext{font-size:11px;color:var(--g4);line-height:1.4}
+
+/* Hatch table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--g5);font-weight:600;background:var(--bg2)}
+td{color:var(--g3)}
+tr:last-child td{border-bottom:none}
+td.season{color:var(--tealL);font-weight:600;font-family:var(--mono);white-space:nowrap}
+.now-row{background:rgba(14,165,160,0.07)}
+.now-tag{font-size:9px;font-weight:700;color:var(--tealL);background:rgba(45,212,191,.15);padding:2px 6px;border-radius:4px;margin-left:8px;letter-spacing:.5px}
+
+/* states */
+.loading,.error{padding:40px 20px;text-align:center;color:var(--g4);font-size:14px}
+.error{color:var(--bad)}
+.error button{margin-top:12px}
+
+footer{border-top:1px solid var(--line);padding:30px 0 50px;font-size:12px;color:var(--g5);line-height:1.7}
+footer b{color:var(--g4)}
+.disclaimer{margin-top:14px;font-size:11px;color:var(--g5);max-width:760px}
+
+@media(max-width:640px){
+  .weather{grid-template-columns:1fr}
+  .head-top{flex-direction:column}
+  .refresh-box{align-items:flex-start}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="head-top">
+      <div>
+        <span class="badge">Live Conditions</span>
+        <h1>Gunnison Basin Fishing Report</h1>
+        <p class="subtitle">Real-time streamflow, water temperature and weather for the Gunnison&nbsp;Valley, Colorado — pulled straight from USGS and the National Weather Service.</p>
+      </div>
+      <div class="refresh-box">
+        <span class="updated">Updated <b id="updated">—</b></span>
+        <button class="refresh" id="refreshBtn" onclick="loadAll()">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="dot good"></span>Prime</span>
+      <span><span class="dot ok"></span>Fair</span>
+      <span><span class="dot warn"></span>Marginal</span>
+      <span><span class="dot bad"></span>Tough / avoid</span>
+      <span><span class="dot na"></span>No data</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-title">Rivers &amp; Streams</div>
+    <div id="rivers" class="grid">
+      <div class="loading">Loading live gauge data…</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title">Weather · Gunnison, CO</div>
+    <div id="weather">
+      <div class="loading">Loading forecast…</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title">Seasonal Hatch Guide</div>
+    <div class="tablewrap">
+      <table id="hatchTable">
+        <thead><tr><th>Window</th><th>Primary hatches</th><th>Go-to patterns</th></tr></thead>
+        <tbody><!-- filled by JS so the current window can be highlighted --></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <div><b>Data sources:</b> Streamflow, gauge height &amp; water temperature from the <a href="https://waterdata.usgs.gov/" target="_blank" rel="noopener">USGS National Water Information System</a>. Weather from the <a href="https://www.weather.gov/" target="_blank" rel="noopener">NOAA / National Weather Service</a> API. Both update roughly every 15–60 minutes.</div>
+    <div class="disclaimer"><b>Disclaimer:</b> Conditions ratings are an automated heuristic based on water temperature and flow trend — they are a starting point, not gospel. Always check current regulations, private-water boundaries, and your own eyes on the water. When water temps push past 68&nbsp;°F, give the trout a break. Tight lines.</div>
+  </footer>
+
+</div>
+
+<script>
+/* ───────────────────────── config ───────────────────────── */
+// USGS site numbers for the Gunnison Basin, in upstream→downstream-ish order.
+const SITES = [
+  { id:"09109000", name:"Taylor River",  sec:"Tailwater · below Taylor Park Dam" },
+  { id:"09110000", name:"Taylor River",  sec:"Freestone · at Almont" },
+  { id:"09112500", name:"East River",    sec:"Freestone · at Almont" },
+  { id:"09114500", name:"Gunnison River",sec:"Mainstem · near Gunnison" },
+  { id:"09119000", name:"Tomichi Creek", sec:"Freestone · at Gunnison" },
+  { id:"09128000", name:"Gunnison River",sec:"Gold Medal · below Gunnison Tunnel" },
+];
+const SITE_IDS = SITES.map(s=>s.id).join(",");
+const USGS_URL = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${SITE_IDS}&parameterCd=00060,00065,00010&period=P3D&siteStatus=all`;
+
+// Gunnison, CO
+const LAT = 38.5458, LON = -106.9253;
+const NWS_HEADERS = { "Accept":"application/geo+json" };
+
+const PARAM = { FLOW:"00060", HEIGHT:"00065", TEMP:"00010" };
+
+/* ───────────────────── helpers ───────────────────── */
+const $ = s => document.querySelector(s);
+const cToF = c => c*9/5+32;
+const fmt = (n,d=0) => n==null||isNaN(n) ? "—" : Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
+
+function tempRating(f){
+  if(f==null||isNaN(f)) return null;
+  if(f < 38) return {k:"warn", label:"Cold", note:"Very cold water — trout sluggish, fish midges deep and slow."};
+  if(f < 50) return {k:"ok",   label:"Cool", note:"Cool water — midday midge and BWO action, metabolism still low."};
+  if(f <=65) return {k:"good", label:"Prime", note:"Prime trout temps — fish should be active and feeding."};
+  if(f <=68) return {k:"warn", label:"Warm", note:"Getting warm — fish early, handle fish fast, watch for stress."};
+  return        {k:"bad",  label:"Too warm", note:"Above 68°F — low oxygen and high stress. Consider giving the fish a rest."};
+}
+
+// Overall card status = worst of temp rating and flow trend caution.
+function overall(tempR, trend){
+  const rank = {good:3, ok:2, warn:1, bad:0, na:-1};
+  let base = tempR ? tempR.k : "na";
+  // A sharply rising hydrograph usually means off-color / blown-out water.
+  if(trend && trend.dir==="up" && trend.pct>=20){
+    base = (rank[base] > rank.warn || base==="na") ? "warn" : base;
+  }
+  const labels = {good:"Prime", ok:"Fair", warn:"Marginal", bad:"Tough", na:"No data"};
+  return { k:base, label:labels[base] };
+}
+
+function trendOf(series){
+  // series: [{t:Date, v:Number}] ascending. Compare latest vs ~24h earlier.
+  if(!series || series.length<2) return null;
+  const last = series[series.length-1];
+  const target = last.t.getTime() - 24*3600*1000;
+  let ref = series[0];
+  for(const p of series){ if(p.t.getTime() <= target) ref = p; else break; }
+  if(ref.v===0) return null;
+  const pct = (last.v - ref.v)/ref.v*100;
+  let dir = "steady";
+  if(pct >= 5) dir="up"; else if(pct <= -5) dir="down";
+  return { dir, pct:Math.abs(pct) };
+}
+
+function sparkline(series){
+  if(!series || series.length<2) return "";
+  const W=290, H=40, pad=2;
+  const vals = series.map(p=>p.v);
+  const min=Math.min(...vals), max=Math.max(...vals), span=(max-min)||1;
+  const n=series.length;
+  const x=i=> pad + i*(W-2*pad)/(n-1);
+  const y=v=> H-pad - (v-min)/span*(H-2*pad);
+  let line=`M ${x(0).toFixed(1)} ${y(vals[0]).toFixed(1)}`;
+  for(let i=1;i<n;i++) line+=` L ${x(i).toFixed(1)} ${y(vals[i]).toFixed(1)}`;
+  const area=`${line} L ${x(n-1).toFixed(1)} ${H} L ${x(0).toFixed(1)} ${H} Z`;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <path class="area" d="${area}"></path><path class="line" d="${line}"></path></svg>`;
+}
+
+/* ───────────────────── USGS rivers ───────────────────── */
+async function loadRivers(){
+  const el = $("#rivers");
+  el.innerHTML = `<div class="loading">Loading live gauge data…</div>`;
+  let data;
+  try{
+    const r = await fetch(USGS_URL);
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    data = await r.json();
+  }catch(e){
+    el.innerHTML = `<div class="error">Couldn't reach USGS water data right now.<br>
+      <button class="refresh" onclick="loadRivers()">Try again</button></div>`;
+    return;
+  }
+
+  // index: siteId -> { paramCode -> series[] }
+  const bySite = {};
+  for(const ts of (data.value?.timeSeries||[])){
+    const sid = ts.sourceInfo?.siteCode?.[0]?.value;
+    const pcode = ts.variable?.variableCode?.[0]?.value;
+    if(!sid||!pcode) continue;
+    const pts = (ts.values?.[0]?.value||[])
+      .map(v=>({ t:new Date(v.dateTime), v:parseFloat(v.value) }))
+      .filter(p=>!isNaN(p.v) && p.v > -999998);
+    (bySite[sid] ||= {})[pcode] = pts;
+  }
+
+  el.innerHTML = SITES.map(site=>{
+    const s = bySite[site.id] || {};
+    const flowS = s[PARAM.FLOW]||[], htS = s[PARAM.HEIGHT]||[], tempS = s[PARAM.TEMP]||[];
+    const flow = flowS.at(-1)?.v, ht = htS.at(-1)?.v;
+    const tempF = tempS.length ? cToF(tempS.at(-1).v) : null;
+    const tr = tempRating(tempF);
+    const trend = trendOf(flowS);
+    const ov = overall(tr, trend);
+
+    const trendHtml = trend ? `<span class="trend ${trend.dir}">${
+      trend.dir==="up"?"▲":trend.dir==="down"?"▼":"▬"} ${fmt(trend.pct,0)}% / 24h</span>` : "";
+
+    const tempTag = tr ? `<span class="tag sb ${tr.k}">${tr.label}</span>` : "";
+    const note = tr ? tr.note : "Water-temperature sensor not reporting at this gauge.";
+
+    return `<div class="card">
+      <div class="stripe ${ov.k}"></div>
+      <div class="statusbadge sb ${ov.k}">${ov.label}</div>
+      <div class="cname">${site.name}</div>
+      <div class="csec">${site.sec}</div>
+      <div class="flowline">
+        <span class="big">${fmt(flow)}</span><span class="unit">cfs</span>
+        ${trendHtml}
+      </div>
+      ${sparkline(flowS)}
+      <div class="metrics">
+        <div class="metric"><div class="ml">Gauge height</div><div class="mv">${fmt(ht,2)} ft</div></div>
+        <div class="metric"><div class="ml">Water temp</div><div class="mv">${tempF==null?"—":fmt(tempF,1)+"°F"}${tempTag}</div></div>
+      </div>
+      <div class="note">${note}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ───────────────────── NWS weather ───────────────────── */
+async function loadWeather(){
+  const el = $("#weather");
+  el.innerHTML = `<div class="loading">Loading forecast…</div>`;
+  try{
+    const pr = await fetch(`https://api.weather.gov/points/${LAT},${LON}`, {headers:NWS_HEADERS});
+    if(!pr.ok) throw new Error("points "+pr.status);
+    const pj = await pr.json();
+    const [fr, hr] = await Promise.all([
+      fetch(pj.properties.forecast, {headers:NWS_HEADERS}),
+      fetch(pj.properties.forecastHourly, {headers:NWS_HEADERS}).catch(()=>null)
+    ]);
+    const fj = await fr.json();
+    const periods = fj.properties.periods.slice(0,5);
+    const loc = pj.properties.relativeLocation?.properties;
+    const place = loc ? `${loc.city}, ${loc.state}` : "Gunnison, CO";
+
+    let now = periods[0];
+    if(hr && hr.ok){ try{ const hj = await hr.json(); now = hj.properties.periods[0]; }catch(e){} }
+
+    el.innerHTML = `<div class="weather">
+      <div class="wnow">
+        <div class="temp">${now.temperature}°<span style="font-size:24px;color:var(--g4)">${now.temperatureUnit}</span></div>
+        <div class="cond">${now.shortForecast}</div>
+        <div class="cond" style="font-size:12px;color:var(--g4);margin-top:4px">Wind ${now.windSpeed} ${now.windDirection||""}</div>
+        <div class="place">${place}</div>
+      </div>
+      <div class="wfore">
+        ${periods.map(p=>`<div class="wcell">
+          <div class="wname">${p.name}</div>
+          <div class="wtemp">${p.temperature}°${p.temperatureUnit}</div>
+          <div class="wtext">${p.shortForecast}</div>
+        </div>`).join("")}
+      </div>
+    </div>`;
+  }catch(e){
+    el.innerHTML = `<div class="error">Couldn't reach the NWS forecast right now.<br>
+      <button class="refresh" onclick="loadWeather()">Try again</button></div>`;
+  }
+}
+
+/* ───────────────────── hatch guide ───────────────────── */
+const HATCH = [
+  { months:[0,1,2],    win:"Winter (Dec–Feb)", bugs:"Midges, small BWOs (tailwaters)", flies:"Zebra Midge, Black Beauty #20-24, Griffith's Gnat" },
+  { months:[2,3,4],    win:"Early Spring (Mar–Apr)", bugs:"Blue-Winged Olives, midges", flies:"BWO Sparkle Dun #18-20, RS2, Pheasant Tail" },
+  { months:[4,5],      win:"Spring / Runoff (May–Jun)", bugs:"Caddis, stoneflies as flows drop", flies:"Pat's Rubber Legs, Elk Hair Caddis, Prince Nymph" },
+  { months:[5,6],      win:"Early Summer (Jun–Jul)", bugs:"Caddis, PMDs, Yellow Sallies, Green Drakes", flies:"PMD #16-18, Green Drake, Stimulator" },
+  { months:[6,7],      win:"Mid Summer (Jul–Aug)", bugs:"PMDs, terrestrials, evening caddis", flies:"Hopper-Dropper, Ant/Beetle, Purple Haze" },
+  { months:[8,9],      win:"Fall (Sep–Oct)", bugs:"BWOs, Tricos, streamers for browns", flies:"BWO, Trico spinner, Sculpin/Streamer" },
+  { months:[10,11],    win:"Late Fall (Nov)", bugs:"Midges, late BWOs", flies:"Midge clusters, RS2, small Pheasant Tail" },
+];
+function renderHatch(){
+  const m = new Date().getMonth();
+  const tb = $("#hatchTable tbody");
+  tb.innerHTML = HATCH.map(h=>{
+    const active = h.months.includes(m);
+    return `<tr class="${active?"now-row":""}">
+      <td class="season">${h.win}${active?'<span class="now-tag">NOW</span>':""}</td>
+      <td>${h.bugs}</td><td>${h.flies}</td></tr>`;
+  }).join("");
+}
+
+/* ───────────────────── orchestration ───────────────────── */
+async function loadAll(){
+  const btn = $("#refreshBtn");
+  btn.disabled = true; btn.innerHTML = `<span class="spin"></span> Refreshing`;
+  await Promise.all([loadRivers(), loadWeather()]);
+  $("#updated").textContent = new Date().toLocaleString(undefined,
+    {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+  btn.disabled = false; btn.innerHTML = "↻ Refresh";
+}
+
+renderHatch();
+loadAll();
+setInterval(loadAll, 15*60*1000); // auto-refresh every 15 min
+</script>
+</body>
+</html>
