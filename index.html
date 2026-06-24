@@ -212,14 +212,23 @@ function tempRating(f){
   return        {k:"bad",  label:"Too warm", note:"Above 68°F — low oxygen and high stress. Consider giving the fish a rest."};
 }
 
-// Overall card status = worst of temp rating and flow trend caution.
+// Overall card status = worst of water-temp rating and flow-trend rating.
 function overall(tempR, trend){
-  const rank = {good:3, ok:2, warn:1, bad:0, na:-1};
-  let base = tempR ? tempR.k : "na";
-  // A sharply rising hydrograph usually means off-color / blown-out water.
-  if(trend && trend.dir==="up" && trend.pct>=20){
-    base = (rank[base] > rank.warn || base==="na") ? "warn" : base;
-  }
+  const rank = {bad:0, warn:1, ok:2, good:3};
+  // Translate the flow trend into the same scale the temp rating uses.
+  //   steady / dropping -> good (settled or clearing = favorable)
+  //   gentle rise        -> ok   (mild caution, clarity worth watching)
+  //   sharp rise (>=20%) -> bad  (off-color / blown-out water)
+  let flowK = null;
+  if(trend) flowK = trend.dir==="up" ? (trend.pct>=20 ? "bad" : "ok") : "good";
+  const tempK = tempR ? tempR.k : null;
+
+  let base;
+  if(tempK && flowK) base = rank[tempK] <= rank[flowK] ? tempK : flowK; // worst of the two
+  else if(tempK) base = tempK;          // no flow trend yet — go on temp alone
+  else if(flowK==="bad") base = "bad";  // no temp sensor, but flag a blown-out river anyway
+  else base = "na";
+
   const labels = {good:"Prime", ok:"Fair", warn:"Marginal", bad:"Tough", na:"No data"};
   return { k:base, label:labels[base] };
 }
