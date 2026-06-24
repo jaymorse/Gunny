@@ -77,6 +77,12 @@ section{padding:36px 0}
 .metric .mv{font-size:15px;color:var(--w);font-weight:600;font-family:var(--mono);margin-top:2px}
 .metric .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:middle}
 .note{font-size:12px;color:var(--g4);margin-top:13px;line-height:1.45}
+.flownote{font-size:12px;color:var(--g3);margin:12px 0 2px;line-height:1.45;border-left:3px solid var(--g5);padding-left:10px}
+.flownote b{font-weight:700}
+.flownote.good{border-color:var(--good)}.flownote.good b{color:var(--good)}
+.flownote.ok{border-color:var(--ok)}.flownote.ok b{color:var(--ok)}
+.flownote.warn{border-color:var(--warn)}.flownote.warn b{color:var(--warn)}
+.flownote.bad{border-color:var(--bad)}.flownote.bad b{color:var(--bad)}
 
 /* Weather */
 .weather{display:grid;grid-template-columns:minmax(220px,260px) 1fr;gap:18px}
@@ -232,6 +238,23 @@ function trendOf(series){
   return { dir, pct:Math.abs(pct) };
 }
 
+// Plain-language read on the flow trend: is it good or bad for fishing, and why.
+function flowNote(trend){
+  if(!trend) return null;
+  const p = fmt(trend.pct,0);
+  if(trend.dir==="steady")
+    return {k:"good", txt:`Holding steady (${p}% / 24h). <b>Good.</b> Stable flows mean settled, predictable fish and consistent clarity — the easiest water to read.`};
+  if(trend.dir==="down"){
+    if(trend.pct>=20)
+      return {k:"ok", txt:`Dropping fast (−${p}% / 24h). <b>Mostly good.</b> Water is clearing after a bump, but a sharp drop can briefly make fish skittish — give it a day to stabilize.`};
+    return {k:"good", txt:`Easing off (−${p}% / 24h). <b>Good.</b> Receding, clearing water concentrates fish and improves wading — classic improving conditions.`};
+  }
+  // dir === "up"
+  if(trend.pct>=20)
+    return {k:"bad", txt:`Spiking (+${p}% / 24h). <b>Tough.</b> A sharp rise usually means off-color or blown-out water, displaced fish and sketchy wading — fish the edges or wait it out.`};
+  return {k:"warn", txt:`Ticking up (+${p}% / 24h). <b>Mixed.</b> A gentle rise can wash in food and switch fish on, but watch the clarity in case it keeps climbing.`};
+}
+
 function sparkline(series){
   if(!series || series.length<2) return "";
   const W=290, H=40, pad=2;
@@ -281,6 +304,7 @@ async function loadRivers(){
     const tempF = tempS.length ? cToF(tempS.at(-1).v) : null;
     const tr = tempRating(tempF);
     const trend = trendOf(flowS);
+    const fn = flowNote(trend);
     const ov = overall(tr, trend);
 
     const trendHtml = trend ? `<span class="trend ${trend.dir}">${
@@ -299,6 +323,7 @@ async function loadRivers(){
         ${trendHtml}
       </div>
       ${sparkline(flowS)}
+      ${fn ? `<div class="flownote ${fn.k}">${fn.txt}</div>` : ""}
       <div class="metrics">
         <div class="metric"><div class="ml">Gauge height</div><div class="mv">${fmt(ht,2)} ft</div></div>
         <div class="metric"><div class="ml">Water temp</div><div class="mv">${tempF==null?"—":fmt(tempF,1)+"°F"}${tempTag}</div></div>
