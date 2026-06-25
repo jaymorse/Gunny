@@ -112,6 +112,15 @@ td.season{color:var(--tealL);font-weight:600;font-family:var(--mono);white-space
 .error{color:var(--bad)}
 .error button{margin-top:12px}
 
+/* ── Pixel fly-fisher loader ── */
+.fisher{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 20px;text-align:center;width:100%}
+.grid .fisher{grid-column:1/-1}
+.fisher canvas.pixfish{width:100%;max-width:300px;height:auto;image-rendering:pixelated;image-rendering:crisp-edges}
+.fisher .cap{font-family:var(--mono);font-size:12.5px;color:var(--g4);letter-spacing:.3px}
+.fisher .cap .dots::after{display:inline-block;width:14px;text-align:left;content:"";animation:fdots 1.6s steps(4,end) infinite}
+@keyframes fdots{0%{content:""}25%{content:"·"}50%{content:"··"}75%{content:"···"}100%{content:""}}
+@media (prefers-reduced-motion:reduce){.fisher .cap .dots::after{content:"···";animation:none}}
+
 footer{border-top:1px solid var(--line);padding:30px 0 50px;font-size:12px;color:var(--g5);line-height:1.7}
 footer b{color:var(--g4)}
 .disclaimer{margin-top:14px;font-size:11px;color:var(--g5);max-width:760px}
@@ -150,16 +159,12 @@ footer b{color:var(--g4)}
 
   <section>
     <div class="sec-title">Rivers &amp; Streams</div>
-    <div id="rivers" class="grid">
-      <div class="loading">Loading live gauge data…</div>
-    </div>
+    <div id="rivers" class="grid"><!-- pixel fly-fisher loader injected by JS --></div>
   </section>
 
   <section>
     <div class="sec-title">Weather · Gunnison, CO</div>
-    <div id="weather">
-      <div class="loading">Loading forecast…</div>
-    </div>
+    <div id="weather"><!-- pixel fly-fisher loader injected by JS --></div>
   </section>
 
   <section>
@@ -203,6 +208,108 @@ const PARAM = { FLOW:"00060", HEIGHT:"00065", TEMP:"00010" };
 const $ = s => document.querySelector(s);
 const cToF = c => c*9/5+32;
 const fmt = (n,d=0) => n==null||isNaN(n) ? "—" : Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+
+/* ───────────────── pixel fly-fisher loader ─────────────────
+   A chunky 8-bit silhouette of an angler wading a river, casting on a
+   loop. Rendered on a tiny canvas and upscaled with nearest-neighbour
+   (image-rendering:pixelated) so it stays crisp & blocky at any size.   */
+function fisherMarkup(caption){
+  return `<div class="fisher">
+    <canvas class="pixfish" width="80" height="44" aria-hidden="true"></canvas>
+    <div class="cap">${caption}<span class="dots"></span></div>
+  </div>`;
+}
+function showFisher(el, caption){
+  el.innerHTML = fisherMarkup(caption);
+  const c = el.querySelector("canvas.pixfish");
+  if(c) startPixelFisher(c);
+}
+
+function startPixelFisher(canvas){
+  const ctx = canvas.getContext("2d");
+  const GW = canvas.width, GH = canvas.height;          // logical pixel grid: 80×44
+  const SURF = 31;                                       // water surface row
+  const FIG = "#2DD4BF", LINE = "#5EEAD4", FLY = "#FBBF24",
+        WATER = "#38BDF8", WATER2 = "#0EA5A0";
+  const reduce = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  const px = (x,y) => { x=Math.round(x); y=Math.round(y);
+    if(x>=0&&y>=0&&x<GW&&y<GH) ctx.fillRect(x,y,1,1); };
+  const rect = (x,y,w,h) => ctx.fillRect(Math.round(x),Math.round(y),w,h);
+  const line = (x0,y0,x1,y1,th=1) => {
+    const steps = Math.max(Math.abs(x1-x0), Math.abs(y1-y0)) || 1;
+    for(let i=0;i<=steps;i++){ const t=i/steps, x=x0+(x1-x0)*t, y=y0+(y1-y0)*t;
+      px(x,y); if(th>1) px(x+1,y); }
+  };
+  const lerpP = (a,b,k) => [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k];
+  const bez = (p,t) => { const u=1-t;
+    return [u*u*u*p[0][0]+3*u*u*t*p[1][0]+3*u*t*t*p[2][0]+t*t*t*p[3][0],
+            u*u*u*p[0][1]+3*u*u*t*p[1][1]+3*u*t*t*p[2][1]+t*t*t*p[3][1]]; };
+
+  const ROD_TIP = [57,2];
+  // fly-line control points — back-cast → forward-cast
+  const BACK = [ROD_TIP, [46,-2], [22,1],  [9,9]];
+  const FWD  = [ROD_TIP, [66,2],  [73,14], [75,27]];
+
+  function drawAngler(){
+    ctx.fillStyle = FIG;
+    rect(26,8,9,1); rect(28,6,5,2);          // hat brim + crown
+    rect(29,9,4,3);                           // head
+    rect(29,12,5,8);                          // torso
+    rect(29,20,6,2);                          // hips
+    line(31,22,29,31); line(33,22,35,31);     // legs into the water
+    line(34,13,39,9); line(33,15,38,11);      // arms up to the grip
+    ctx.fillStyle = LINE;
+    line(39,9,ROD_TIP[0],ROD_TIP[1]);         // the rod
+  }
+
+  function drawWater(time){
+    ctx.fillStyle = WATER2; ctx.globalAlpha = .5; rect(0,SURF,GW,1); ctx.globalAlpha = 1;
+    ctx.fillStyle = WATER;
+    for(let row=0;row<5;row++){
+      const y = SURF+1+row*2; if(y>=GH) break;
+      const off = Math.floor(time*0.012*(1+row*0.35)) % 8;
+      ctx.globalAlpha = 0.5 - row*0.08;
+      for(let x=-off;x<GW;x+=8) rect(x,y,3,1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawLine(a){
+    ctx.fillStyle = LINE;
+    const P = [0,1,2,3].map(i => lerpP(BACK[i],FWD[i],a));
+    let end=null;
+    for(let t=0;t<=1.0001;t+=0.02){ end = bez(P,t); px(end[0],end[1]); }
+    if(end){ ctx.fillStyle = FLY; px(end[0],end[1]); }      // the fly on the leader
+    // ripple where the fly kisses the water on the forward cast
+    if(a>0.78 && end){
+      ctx.fillStyle = WATER; ctx.globalAlpha = (a-0.78)/0.22*0.8;
+      const r = 1+(a-0.78)*14;
+      for(let i=0;i<14;i++){ const an=i/14*Math.PI*2;
+        px(end[0]+Math.cos(an)*r, SURF+Math.sin(an)*r*0.35); }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function render(time){
+    ctx.clearRect(0,0,GW,GH);
+    const a = 0.5 - 0.5*Math.cos(time*0.0022);   // 0→1→0 cast, ~2.85s loop
+    drawWater(time);
+    drawAngler();
+    drawLine(a);
+  }
+
+  if(reduce){ render(900); return; }             // static frame, mid-cast
+  let start=null;
+  (function frame(ts){
+    if(!canvas.isConnected) return;              // gone from DOM → stop the loop
+    if(start==null) start=ts;
+    render(ts-start);
+    requestAnimationFrame(frame);
+  })(performance.now());
+}
 
 function tempRating(f){
   if(f==null||isNaN(f)) return null;
@@ -283,17 +390,19 @@ function sparkline(series){
 /* ───────────────────── USGS rivers ───────────────────── */
 async function loadRivers(){
   const el = $("#rivers");
-  el.innerHTML = `<div class="loading">Loading live gauge data…</div>`;
+  showFisher(el, "Casting for live gauge data");
   let data;
   try{
     const r = await fetch(USGS_URL);
     if(!r.ok) throw new Error("HTTP "+r.status);
     data = await r.json();
   }catch(e){
+    await wait(2000);   // let the fisher land one more cast — a nice touch
     el.innerHTML = `<div class="error">Couldn't reach USGS water data right now.<br>
       <button class="refresh" onclick="loadRivers()">Try again</button></div>`;
     return;
   }
+  await wait(2000);     // hold the animation ~2s past the actual load
 
   // index: siteId -> { paramCode -> series[] }
   const bySite = {};
@@ -346,7 +455,7 @@ async function loadRivers(){
 /* ───────────────────── NWS weather ───────────────────── */
 async function loadWeather(){
   const el = $("#weather");
-  el.innerHTML = `<div class="loading">Loading forecast…</div>`;
+  showFisher(el, "Reading the river & sky");
   try{
     const pr = await fetch(`https://api.weather.gov/points/${LAT},${LON}`, {headers:NWS_HEADERS});
     if(!pr.ok) throw new Error("points "+pr.status);
@@ -363,6 +472,7 @@ async function loadWeather(){
     let now = periods[0];
     if(hr && hr.ok){ try{ const hj = await hr.json(); now = hj.properties.periods[0]; }catch(e){} }
 
+    await wait(2000);     // hold the animation ~2s past the actual load
     el.innerHTML = `<div class="weather">
       <div class="wnow">
         <div class="temp">${now.temperature}°<span style="font-size:24px;color:var(--g4)">${now.temperatureUnit}</span></div>
@@ -379,6 +489,7 @@ async function loadWeather(){
       </div>
     </div>`;
   }catch(e){
+    await wait(2000);   // let the fisher land one more cast — a nice touch
     el.innerHTML = `<div class="error">Couldn't reach the NWS forecast right now.<br>
       <button class="refresh" onclick="loadWeather()">Try again</button></div>`;
   }
