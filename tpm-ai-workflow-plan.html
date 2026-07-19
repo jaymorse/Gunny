@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPM AI Operating Plan</title>
+<style>
+  :root {
+    --bg: #f6f8fb;
+    --surface: #ffffff;
+    --surface-2: #eef1f6;
+    --ink: #17202e;
+    --ink-soft: #384254;
+    --muted: #5b6675;
+    --border: #dbe1ea;
+    --border-strong: #c3ccd8;
+    --accent: #9c5e12;
+    --accent-soft: #f3e6d0;
+    --accent-ink: #7a4909;
+    --rag-green: #2f7d55;
+    --rag-green-bg: #e3f1e8;
+    --rag-amber: #b07514;
+    --rag-amber-bg: #f6ecd6;
+    --rag-red: #b13636;
+    --rag-red-bg: #f6e0e0;
+    --shadow: 0 1px 2px rgba(23,32,46,.06), 0 8px 24px rgba(23,32,46,.05);
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1620;
+      --surface: #161f2b;
+      --surface-2: #1d2836;
+      --ink: #e7ecf3;
+      --ink-soft: #c3ccd8;
+      --muted: #92a0b1;
+      --border: #293646;
+      --border-strong: #38475a;
+      --accent: #e0a94e;
+      --accent-soft: #2c2415;
+      --accent-ink: #f0c987;
+      --rag-green: #5cc98a;
+      --rag-green-bg: #16281f;
+      --rag-amber: #e6bd5f;
+      --rag-amber-bg: #2a2416;
+      --rag-red: #ee8686;
+      --rag-red-bg: #2c1a1a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f8fb; --surface: #ffffff; --surface-2: #eef1f6; --ink: #17202e; --ink-soft: #384254;
+    --muted: #5b6675; --border: #dbe1ea; --border-strong: #c3ccd8; --accent: #9c5e12;
+    --accent-soft: #f3e6d0; --accent-ink: #7a4909; --rag-green: #2f7d55; --rag-green-bg: #e3f1e8;
+    --rag-amber: #b07514; --rag-amber-bg: #f6ecd6; --rag-red: #b13636; --rag-red-bg: #f6e0e0;
+    --shadow: 0 1px 2px rgba(23,32,46,.06), 0 8px 24px rgba(23,32,46,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1620; --surface: #161f2b; --surface-2: #1d2836; --ink: #e7ecf3; --ink-soft: #c3ccd8;
+    --muted: #92a0b1; --border: #293646; --border-strong: #38475a; --accent: #e0a94e;
+    --accent-soft: #2c2415; --accent-ink: #f0c987; --rag-green: #5cc98a; --rag-green-bg: #16281f;
+    --rag-amber: #e6bd5f; --rag-amber-bg: #2a2416; --rag-red: #ee8686; --rag-red-bg: #2c1a1a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "kern" 1;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- eyebrow / labels ---- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  /* ---- sticky nav ---- */
+  .topnav {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topnav .wrap { display: flex; align-items: center; gap: 20px; height: 54px; }
+  .brand {
+    font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .02em;
+    color: var(--ink); white-space: nowrap; display: flex; align-items: center; gap: 9px;
+  }
+  .brand .dot { width: 9px; height: 9px; border-radius: 2px; background: var(--accent); display: inline-block; }
+  .topnav nav { display: flex; gap: 4px; overflow-x: auto; margin-left: auto; scrollbar-width: none; }
+  .topnav nav::-webkit-scrollbar { display: none; }
+  .topnav nav a {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .03em;
+    color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 6px;
+    white-space: nowrap; transition: color .15s, background .15s;
+  }
+  .topnav nav a:hover { color: var(--ink); background: var(--surface-2); }
+
+  /* ---- hero ---- */
+  header.hero { padding: 64px 0 40px; border-bottom: 1px solid var(--border); }
+  .hero .kicker { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 22px; }
+  .tag {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 5px; border: 1px solid var(--border-strong); color: var(--muted);
+  }
+  h1 {
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    line-height: 1.04; letter-spacing: -.02em; font-weight: 800;
+    margin: 0 0 20px; text-wrap: balance; max-width: 16ch;
+  }
+  h1 .hl { color: var(--accent); }
+  .lede { font-size: clamp(1.05rem, 2vw, 1.28rem); color: var(--ink-soft); max-width: 60ch; margin: 0; }
+  .hero-meta {
+    display: flex; flex-wrap: wrap; gap: 28px; margin-top: 36px;
+    padding-top: 26px; border-top: 1px dashed var(--border-strong);
+  }
+  .hero-meta div { display: flex; flex-direction: column; gap: 3px; }
+  .hero-meta dt { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .hero-meta dd { margin: 0; font-weight: 600; font-size: 15px; }
+
+  /* ---- section scaffolding ---- */
+  section { padding: 58px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 64px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 30px; }
+  .sec-num { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 700; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -.015em; font-weight: 750; margin: 0; text-wrap: balance; }
+  .sec-intro { color: var(--ink-soft); max-width: 62ch; margin: -14px 0 30px; font-size: 1.02rem; }
+
+  /* ---- principles grid ---- */
+  .principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .principle {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px;
+    box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px;
+  }
+  .principle .pidx { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 700; }
+  .principle h3 { margin: 0; font-size: 1.05rem; letter-spacing: -.01em; }
+  .principle p { margin: 0; font-size: .94rem; color: var(--muted); }
+
+  /* ---- cadence table ---- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; }
+  thead th {
+    text-align: left; font-family: var(--mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; padding: 14px 18px; background: var(--surface-2);
+    border-bottom: 1px solid var(--border); position: sticky; top: 0;
+  }
+  tbody td { padding: 15px 18px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: .93rem; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: color-mix(in srgb, var(--accent-soft) 40%, transparent); }
+  .cadence { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--accent-ink); white-space: nowrap; }
+  .wf-name { font-weight: 650; color: var(--ink); }
+  td .who { color: var(--ink-soft); }
+
+  /* ---- workflow cards ---- */
+  .workflows { display: flex; flex-direction: column; gap: 16px; }
+  .wf {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .wf.flagship { border-color: var(--accent); border-width: 1.5px; }
+  .wf-top { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+  .wf-tag { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 700; padding-top: 3px; }
+  .wf-title { margin: 0; font-size: 1.15rem; letter-spacing: -.01em; flex: 1; min-width: 200px; }
+  .flag-badge {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700;
+    color: var(--surface); background: var(--accent); padding: 4px 8px; border-radius: 5px; align-self: flex-start;
+  }
+  .replaces { margin: 12px 0 0; font-size: .93rem; color: var(--muted); }
+  .replaces b { color: var(--ink-soft); font-weight: 600; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chip {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .02em; padding: 3px 9px; border-radius: 20px;
+    background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--border);
+  }
+  /* prompt block */
+  .prompt {
+    margin-top: 16px; background: var(--surface-2); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 8px; overflow: hidden;
+  }
+  .prompt-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .prompt-head span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .copybtn {
+    font-family: var(--mono); font-size: 11px; cursor: pointer; border: 1px solid var(--border-strong);
+    background: var(--surface); color: var(--ink-soft); padding: 4px 10px; border-radius: 6px;
+    transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .copybtn:hover { border-color: var(--accent); color: var(--accent-ink); }
+  .copybtn.done { color: var(--rag-green); border-color: var(--rag-green); }
+  .prompt-body { padding: 14px 16px; font-size: .92rem; color: var(--ink); font-style: italic; }
+
+  /* ---- rollout timeline ---- */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .phase { display: grid; grid-template-columns: 130px 1fr; gap: 24px; padding: 20px 0; position: relative; }
+  .phase + .phase { border-top: 1px solid var(--border); }
+  .phase-mark { display: flex; flex-direction: column; gap: 4px; }
+  .phase-step {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--surface);
+    background: var(--accent); width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .phase-when { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+  .phase h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  .phase h3 .stage { color: var(--accent-ink); }
+  .phase ul { margin: 8px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: .95rem; }
+  .phase li { margin-bottom: 4px; }
+
+  /* ---- metrics ---- */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .metric {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px;
+    box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px;
+  }
+  .metric .val { font-family: var(--mono); font-size: 1.9rem; font-weight: 700; color: var(--accent); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .metric .lab { font-weight: 650; font-size: .98rem; }
+  .metric .desc { font-size: .86rem; color: var(--muted); }
+
+  /* ---- guardrails callout ---- */
+  .callout {
+    background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    border-radius: 14px; padding: 28px 30px;
+  }
+  .callout .eyebrow { color: var(--accent-ink); }
+  .callout ul { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+  .callout li { display: flex; gap: 12px; align-items: flex-start; font-size: .96rem; color: var(--ink-soft); }
+  .callout li b { color: var(--ink); font-weight: 650; }
+  .callout li::before {
+    content: ""; flex: none; width: 8px; height: 8px; margin-top: 8px; border-radius: 2px;
+    background: var(--accent); transform: rotate(45deg);
+  }
+
+  /* ---- checklist ---- */
+  .checklist { display: grid; gap: 10px; }
+  .check {
+    display: flex; align-items: center; gap: 14px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; cursor: pointer;
+    transition: border-color .15s, background .15s; user-select: none;
+  }
+  .check:hover { border-color: var(--border-strong); }
+  .check .box {
+    flex: none; width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center; transition: all .15s;
+  }
+  .check .box svg { width: 13px; height: 13px; opacity: 0; transform: scale(.6); transition: all .15s; color: var(--surface); }
+  .check .txt { font-size: .97rem; transition: color .15s; }
+  .check.on .box { background: var(--rag-green); border-color: var(--rag-green); }
+  .check.on .box svg { opacity: 1; transform: scale(1); }
+  .check.on .txt { color: var(--muted); text-decoration: line-through; }
+  .check-progress { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 16px; letter-spacing: .04em; }
+
+  /* ---- footer ---- */
+  footer.pf { padding: 46px 0 60px; }
+  footer.pf p { color: var(--muted); font-size: .88rem; max-width: 64ch; margin: 0; }
+  footer.pf .note { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 10px; }
+
+  @media (max-width: 620px) {
+    .phase { grid-template-columns: 1fr; gap: 10px; }
+    .hero-meta { gap: 20px; }
+    section { padding: 44px 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="topnav">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>TPM · AI OPERATING PLAN</div>
+    <nav>
+      <a href="#principles">Principles</a>
+      <a href="#rhythm">Rhythm</a>
+      <a href="#playbook">Playbook</a>
+      <a href="#rollout">Rollout</a>
+      <a href="#metrics">Metrics</a>
+      <a href="#guardrails">Guardrails</a>
+      <a href="#checklist">Checklist</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="tag">Technical Program Manager</span>
+      <span class="tag">Oracle</span>
+      <span class="tag">Daily operating layer</span>
+    </div>
+    <h1>Run your programs on an <span class="hl">AI operating layer</span>.</h1>
+    <p class="lede">A practical plan to fold AI into the TPM day — so reports, status roll-ups, and repetitive data work take minutes, and your time goes to judgment, escalation, and coordination instead of copy-paste.</p>
+    <dl class="hero-meta">
+      <div><dt>Owns the judgment</dt><dd>You</dd></div>
+      <div><dt>Owns the assembly</dt><dd>AI</dd></div>
+      <div><dt>Target reporting time</dt><dd>&minus;50 to 70%</dd></div>
+      <div><dt>Rollout</dt><dd>4 weeks · crawl → run</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main>
+  <!-- 1. PRINCIPLES -->
+  <section id="principles">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-num">01</span><h2>Guiding principles</h2></div>
+      <p class="sec-intro">Five rules that keep AI in its lane — a fast analyst that assembles, never the person who signs off.</p>
+      <div class="principles">
+        <div class="principle"><span class="pidx">P1</span><h3>Automate the assembly, own the judgment</h3><p>AI drafts the report and pulls the metrics. You decide what's red, what to escalate, and what to tell a VP.</p></div>
+        <div class="principle"><span class="pidx">P2</span><h3>One source of truth in, artifacts out</h3><p>Keep program data in one place. Point AI at it to generate the deck, the exec email, the RAID log — never re-key by hand.</p></div>
+        <div class="principle"><span class="pidx">P3</span><h3>Templatize once, reuse forever</h3><p>A TPM's outputs repeat weekly. Build a prompt for each recurring artifact so week N is a 30-second refresh.</p></div>
+        <div class="principle"><span class="pidx">P4</span><h3>Verify before you send</h3><p>AI-drafted numbers and commitments get a human check. Strong first draft — not signed-off truth.</p></div>
+        <div class="principle"><span class="pidx">P5</span><h3>Respect data handling</h3><p>Confirm what program and customer data may enter which system per Oracle policy before wiring up connectors.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. RHYTHM -->
+  <section id="rhythm">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-num">02</span><h2>The operating rhythm</h2></div>
+      <p class="sec-intro">The recurring TPM cadence, mapped to what AI does and what stays yours. Everything below is detailed in the playbook.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Cadence</th><th>Workflow</th><th>AI does</th><th>You do</th></tr></thead>
+          <tbody>
+            <tr><td class="cadence">Every morning</td><td class="wf-name">Daily brief</td><td>Summarize overnight mail, today's meetings, blockers, and mentions into one briefing</td><td class="who">Triage: pick the 3 that matter, decide escalations</td></tr>
+            <tr><td class="cadence">Before meetings</td><td class="wf-name">Meeting prep</td><td>Pull attendee context, last decisions, open actions on that program</td><td class="who">Walk in current without digging</td></tr>
+            <tr><td class="cadence">After meetings</td><td class="wf-name">Notes → actions</td><td>Transcribe, summarize decisions, extract owners + due dates, draft follow-up</td><td class="who">Confirm owners, send</td></tr>
+            <tr><td class="cadence">Daily</td><td class="wf-name">Inbox / chat drafting</td><td>Draft replies, status nudges, cross-team asks</td><td class="who">Edit tone, approve</td></tr>
+            <tr><td class="cadence">Weekly · Thu/Fri</td><td class="wf-name">Status roll-up</td><td>Assemble program status from tracker + notes + metrics into the standard report</td><td class="who">Set RAG, add narrative, escalate</td></tr>
+            <tr><td class="cadence">Weekly</td><td class="wf-name">Risk / RAID review</td><td>Diff this week's risks vs last, flag new and aging items</td><td class="who">Decide mitigations</td></tr>
+            <tr><td class="cadence">Monthly · milestone</td><td class="wf-name">Exec update &amp; metrics</td><td>Build the exec summary, trend charts, readiness scorecard</td><td class="who">Deliver the story</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. PLAYBOOK -->
+  <section id="playbook">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Workflow playbook</h2></div>
+      <p class="sec-intro">Nine workflows with the exact prompt to use. Copy a prompt, point it at your program's data, and refine the output.</p>
+      <div class="workflows">
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W1</span><h3 class="wf-title">The morning brief</h3></div>
+          <p class="replaces"><b>Replaces:</b> 20–30 min of scanning mail, calendar, and chat to reconstruct what's going on.</p>
+          <div class="tools"><span class="chip">Mail</span><span class="chip">Calendar</span><span class="chip">Slack / Teams</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Daily prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">Give me my morning brief. Summarize unread mail from the last 16 hours grouped by program, list today's meetings with what each is about, surface anything where someone is waiting on me or flagged a blocker, and give me a prioritized top-5 action list.</div></div>
+          <p class="replaces">Level up: schedule it to run automatically each weekday so the brief is waiting for you.</p>
+        </div>
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W2</span><h3 class="wf-title">Meeting prep</h3></div>
+          <p class="replaces"><b>Replaces:</b> digging through old notes before a call.</p>
+          <div class="tools"><span class="chip">Calendar</span><span class="chip">Drive / Docs</span><span class="chip">Mail history</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">My next meeting is [program X sync]. Pull the last decisions and open action items for that program, who owns what, and anything unresolved from the previous session. Give me a half-page prep sheet.</div></div>
+        </div>
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W3</span><h3 class="wf-title">Meeting notes → decisions → actions</h3></div>
+          <p class="replaces"><b>Replaces:</b> note-taking and the "who agreed to what" reconstruction afterward — the biggest TPM time sink.</p>
+          <div class="tools"><span class="chip">Transcription (Fireflies)</span><span class="chip">Mail</span><span class="chip">Tracker</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">From this meeting transcript, give me: (1) a 5-bullet summary, (2) every decision made, (3) an action-item table with owner and due date, (4) any risks or dependencies raised. Then draft a follow-up email to attendees.</div></div>
+          <p class="replaces">Confirm owners and dates, paste actions into your tracker, send the follow-up.</p>
+        </div>
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W4</span><h3 class="wf-title">Inbox &amp; chat drafting</h3></div>
+          <p class="replaces"><b>Replaces:</b> writing the same status nudges, cross-team asks, and "circling back" notes all day.</p>
+          <div class="tools"><span class="chip">Mail</span><span class="chip">Slack / Teams</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">Draft a Slack message to #program-x asking each workstream lead for their RAG status and top risk by EOD Thursday. Then summarize this 40-message thread into the decision, who's blocked, and what I need to do.</div></div>
+          <p class="replaces">Save a short style note ("concise, direct, lead with the ask") the assistant reuses to keep drafts in your voice.</p>
+        </div>
+
+        <div class="wf flagship">
+          <div class="wf-top"><span class="wf-tag">W5</span><h3 class="wf-title">The weekly status report</h3><span class="flag-badge">Flagship</span></div>
+          <p class="replaces"><b>Replaces:</b> the 1–2 hours every week spent assembling status from many sources into the standard format.</p>
+          <div class="tools"><span class="chip">Tracker (xlsx)</span><span class="chip">Meeting notes</span><span class="chip">Docs / Slides</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Weekly prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">Using the program tracker at [link] and this week's meeting notes, generate our standard weekly status report: overall RAG, per-workstream status with the delta since last week, milestones hit and missed, top 3 risks, and asks for leadership. Match the format of last week's report.</div></div>
+          <p class="replaces">You set the RAG colors, add the narrative and the "so what," and mark escalations. Once the format stabilizes, save it as a reusable template — week N becomes run → review → send.</p>
+        </div>
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W6</span><h3 class="wf-title">Risk / RAID log maintenance</h3></div>
+          <p class="replaces"><b>Replaces:</b> manually reconciling what changed in the risk register.</p>
+          <div class="tools"><span class="chip">Risk register</span><span class="chip">Prior week</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">Compare this week's risk register to last week's. What's new, what aged without movement, what closed? Flag any risk open over 2 weeks with no mitigation owner, and suggest a mitigation for each new one.</div></div>
+        </div>
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W7</span><h3 class="wf-title">Data &amp; metrics work</h3></div>
+          <p class="replaces"><b>Replaces:</b> cleaning exports, building the same charts, computing rollups by hand.</p>
+          <div class="tools"><span class="chip">Spreadsheet (xlsx)</span><span class="chip">Dataviz</span><span class="chip">Wolfram</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">From this defect export: give me open vs. closed by week, average age of open blockers, and which team is trending worse. Then build a burn-down and a defect-trend chart I can drop into the exec deck.</div></div>
+          <p class="replaces">Always spot-check AI-computed figures against the raw source before they go in a report.</p>
+        </div>
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W8</span><h3 class="wf-title">Executive summaries &amp; decks</h3></div>
+          <p class="replaces"><b>Replaces:</b> translating detailed program state into a VP-ready one-pager or deck.</p>
+          <div class="tools"><span class="chip">Slides (pptx)</span><span class="chip">Docs (docx / pdf)</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">Turn this weekly status into a 5-slide exec update: one-line program health, milestone timeline, top 3 risks with mitigations, key decision needed, and the ask. Executive tone — outcomes, not activity.</div></div>
+        </div>
+
+        <div class="wf">
+          <div class="wf-top"><span class="wf-tag">W9</span><h3 class="wf-title">Cross-program search &amp; recall</h3></div>
+          <p class="replaces"><b>Replaces:</b> "where did we decide that?" archaeology across docs and chat.</p>
+          <div class="tools"><span class="chip">Drive</span><span class="chip">Slack / Teams</span></div>
+          <div class="prompt"><div class="prompt-head"><span>Prompt</span><button class="copybtn" type="button">Copy</button></div><div class="prompt-body">Search my Drive and Slack for the decision on the [auth migration] rollback plan and tell me what we agreed and who owned it.</div></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. ROLLOUT -->
+  <section id="rollout">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-num">04</span><h2>Rollout — crawl, walk, run</h2></div>
+      <p class="sec-intro">A sequenced four-week adoption path. Prove value on low-risk work first; automate the flagship last.</p>
+      <div class="timeline">
+        <div class="phase">
+          <div class="phase-mark"><div class="phase-step">1</div><div class="phase-when">Week 1</div></div>
+          <div><h3><span class="stage">Crawl</span> — prove value on low-risk work</h3>
+            <ul><li>Connect mail, calendar, and drive/docs (within Oracle data policy).</li><li>Adopt two workflows only: the <b>morning brief</b> and <b>notes → action items</b>.</li><li>Goal: feel the time savings on the two highest-frequency tasks.</li></ul></div>
+        </div>
+        <div class="phase">
+          <div class="phase-mark"><div class="phase-step">2</div><div class="phase-when">Weeks 2–3</div></div>
+          <div><h3><span class="stage">Walk</span> — attack the flagship</h3>
+            <ul><li>Consolidate program data into one tracker.</li><li>Build the <b>weekly status report</b> workflow and run it for a real cycle.</li><li>Add inbox/chat drafting and meeting prep to the daily habit.</li></ul></div>
+        </div>
+        <div class="phase">
+          <div class="phase-mark"><div class="phase-step">3</div><div class="phase-when">Week 4</div></div>
+          <div><h3><span class="stage">Run</span> — templatize &amp; automate</h3>
+            <ul><li>Turn weekly status, exec update, and RAID diff into saved templates.</li><li>Schedule the morning brief to run automatically each weekday.</li><li>Add metrics/dataviz for the recurring charts.</li></ul></div>
+        </div>
+        <div class="phase">
+          <div class="phase-mark"><div class="phase-step">∞</div><div class="phase-when">Ongoing</div></div>
+          <div><h3><span class="stage">Compound</span> — make it stick</h3>
+            <ul><li>Every time you do a repetitive task twice, template it.</li><li>Keep a personal prompt library of what works for your programs.</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-num">05</span><h2>Is it working?</h2></div>
+      <p class="sec-intro">Track for four weeks, before and after. The real win is the last one.</p>
+      <div class="metrics">
+        <div class="metric"><span class="val">&minus;50–70%</span><span class="lab">Reporting time</span><span class="desc">Hours/week on status assembly.</span></div>
+        <div class="metric"><span class="val">Same day</span><span class="lab">Action-item latency</span><span class="desc">Meeting → tracked commitments, every time.</span></div>
+        <div class="metric"><span class="val">100%</span><span class="lab">On-time status</span><span class="desc">Because it's now a 30-min task.</span></div>
+        <div class="metric"><span class="val">Earlier</span><span class="lab">Escalation lead time</span><span class="desc">Risks surface sooner — the diffing is automated.</span></div>
+        <div class="metric"><span class="val">↑ Judgment</span><span class="lab">Time on what matters</span><span class="desc">Coordination &amp; decisions over copy-paste.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. GUARDRAILS -->
+  <section id="guardrails">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-num">06</span><h2>Guardrails &amp; data handling</h2></div>
+      <div class="callout">
+        <p class="eyebrow">Non-negotiable</p>
+        <ul>
+          <li><span><b>Confirm Oracle policy</b> on what program, customer, and financial data may enter each AI system before wiring up connectors. Prefer approved/internal AI for anything sensitive.</span></li>
+          <li><span><b>Human-in-the-loop on anything outbound</b> — every AI-drafted email, exec number, and commitment gets a review before it leaves.</span></li>
+          <li><span><b>No unverified numbers in reports.</b> AI assembles; you verify against source.</span></li>
+          <li><span><b>Least-privilege connectors.</b> Grant only the access each workflow needs.</span></li>
+          <li><span><b>Keep an audit trail.</b> Reports and decisions live in the system of record, not a chat thread.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. CHECKLIST -->
+  <section id="checklist">
+    <div class="wrap">
+      <div class="sec-head"><span class="sec-num">07</span><h2>Quick-start checklist</h2></div>
+      <p class="check-progress" id="progress">0 / 9 complete</p>
+      <div class="checklist" id="cl">
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Confirm which AI tools/connectors are approved under Oracle data policy.</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Connect mail, calendar, drive, and chat.</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Set up meeting transcription for recurring syncs.</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Create the single program tracker (system of record).</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Start the morning-brief habit, then automate it.</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Adopt notes → action items for every meeting.</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Build and run the weekly status report workflow.</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Save a prompt library and templatize the top 3 recurring reports.</span></div>
+        <div class="check"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg></span><span class="txt">Review metrics at week 4; expand to metrics/dataviz and exec decks.</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="pf">
+  <div class="wrap">
+    <p class="note">Adapt to your stack</p>
+    <p>These workflows transfer directly whether your stack is Outlook / Teams / OCI and Oracle's internal AI, or the mail / calendar / drive / chat connectors named here — only the connector names change. Automate the assembly; own the judgment.</p>
+  </div>
+</footer>
+
+<script>
+  // Copy buttons on prompt blocks
+  document.querySelectorAll(".prompt").forEach(function (p) {
+    var btn = p.querySelector(".copybtn");
+    var body = p.querySelector(".prompt-body");
+    if (!btn || !body) return;
+    btn.addEventListener("click", function () {
+      var text = body.textContent.trim();
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = "Copied ✓";
+        btn.classList.add("done");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1600);
+      }).catch(function () {
+        btn.textContent = "Copy failed";
+        setTimeout(function () { btn.textContent = "Copy"; }, 1600);
+      });
+    });
+  });
+
+  // Interactive checklist
+  var checks = Array.prototype.slice.call(document.querySelectorAll("#cl .check"));
+  var progress = document.getElementById("progress");
+  function refresh() {
+    var done = checks.filter(function (c) { return c.classList.contains("on"); }).length;
+    progress.textContent = done + " / " + checks.length + " complete";
+  }
+  checks.forEach(function (c) {
+    c.setAttribute("role", "checkbox");
+    c.setAttribute("aria-checked", "false");
+    c.setAttribute("tabindex", "0");
+    function toggle() {
+      c.classList.toggle("on");
+      c.setAttribute("aria-checked", c.classList.contains("on") ? "true" : "false");
+      refresh();
+    }
+    c.addEventListener("click", toggle);
+    c.addEventListener("keydown", function (e) {
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
+    });
+  });
+
+  // Smooth-scroll nav
+  document.querySelectorAll('.topnav nav a').forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var id = a.getAttribute("href");
+      var el = document.querySelector(id);
+      if (el) { e.preventDefault(); el.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    });
+  });
+</script>
+</html>
