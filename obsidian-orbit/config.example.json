@@ -1,0 +1,76 @@
+{
+  "_comment": [
+    "Copy to config.json and fill in from a real Orbit request — see README",
+    "'Confirm the API contract'. Every value below is a placeholder; nothing",
+    "here has been verified against the live Orbit API."
+  ],
+
+  "vault": "Gravitee",
+  "board_id": "136a1725-e769-480a-bd78-d3c9f9fd68f8",
+
+  "api": {
+    "base_url": "https://gravitee.info/orbit/api",
+    "create_path": "/cards",
+    "update_path": "/cards/{cardId}",
+    "get_path": "/cards/{cardId}",
+    "update_method": "PATCH",
+    "auth_header": "Authorization",
+    "auth_prefix": "Bearer "
+  },
+
+  "response_card_id_path": "id",
+  "obsidian_rest_url": "https://127.0.0.1:27124",
+
+  "description_field": "description",
+  "description_format": "markdown",
+
+  "board_field": "board_id",
+  "column_field": "column_id",
+  "tags_field": "labels",
+
+  "field_map": {
+    "title": "title",
+    "headcount": "fields.headcount",
+    "department": "fields.department",
+    "hiring_manager": "fields.hiring_manager",
+    "head_of_department": "fields.head_of_department",
+    "location": "fields.location",
+    "salary_range": "fields.salary_range",
+    "tracker_ref": "fields.tracker_ref",
+    "candidate": "fields.candidate",
+    "role": "fields.role",
+    "salary_expectation": "fields.salary_expectation",
+    "start_date": "fields.start_date",
+    "employee": "fields.employee",
+    "last_day": "fields.last_day",
+    "reason": "fields.reason",
+    "manager": "fields.manager",
+    "current_salary": "fields.current_salary",
+    "proposed_salary": "fields.proposed_salary",
+    "benchmark_rationale": "fields.benchmark_rationale"
+  },
+
+  "constant_fields": {
+    "source": "obsidian-sync"
+  },
+
+  "column_order": [
+    "Preparing case",
+    "HR Review",
+    "Finance",
+    "Approver",
+    "Approved",
+    "Live Roles",
+    "Actioned"
+  ],
+
+  "owned_columns": ["Preparing case", "HR Review"],
+
+  "column_map": {
+    "Preparing case": "REPLACE_WITH_COLUMN_ID",
+    "HR Review": "REPLACE_WITH_COLUMN_ID"
+  },
+
+  "wikilinks": "text",
+  "strip_tags": true
+}

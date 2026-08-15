@@ -1,0 +1,14 @@
+{
+  "name": "obsidian-orbit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sync Obsidian notes onto the Gravitee Orbit approval board via n8n",
+  "scripts": {
+    "build": "node n8n/build-workflow.js",
+    "test": "node --test \"test/*.test.js\"",
+    "check": "npm run build && npm test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
