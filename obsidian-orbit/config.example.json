@@ -9,7 +9,8 @@
   "board_id": "136a1725-e769-480a-bd78-d3c9f9fd68f8",
 
   "api": {
-    "base_url": "https://gravitee.info/orbit/api",
+    "_base_url_note": "Confirmed from a live capture: GET /api/orbit/events/changed?boardId=... The paths below are still guesses.",
+    "base_url": "https://gravitee.info/api/orbit",
     "create_path": "/cards",
     "update_path": "/cards/{cardId}",
     "get_path": "/cards/{cardId}",

@@ -25,8 +25,10 @@
  * ('__orbitCapture') clears what it collected.
  */
 (() => {
+  // events/changed is Orbit's change-feed poll. It fires on a timer, so it
+  // both buries the interesting calls and evicts them via the slice cap below.
   const IGNORE =
-    /google-analytics|googletagmanager|doubleclick|gstatic|sentry|datadoghq|posthog|segment|intercom|launchdarkly|hotjar|fullstory|newrelic|cloudflareinsights/;
+    /google-analytics|googletagmanager|doubleclick|gstatic|sentry|datadoghq|posthog|segment|intercom|launchdarkly|hotjar|fullstory|newrelic|cloudflareinsights|events\/changed/;
   const KEY = '__orbitCapture';
   const BODY_MAX = 3000;
   const RESPONSE_MAX = 800;
