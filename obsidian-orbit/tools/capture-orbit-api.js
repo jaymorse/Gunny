@@ -1,80 +1,101 @@
 /**
- * Paste into the Chrome console on the Orbit board to record its write calls.
+ * Paste into the Chrome console on the Orbit board to record its API calls.
  *
- * Captures method, URL, request-header NAMES, request body and response body
- * for every non-GET same-origin request. Header *values* are never recorded,
- * so the output cannot leak your token or session cookie.
+ * v2 — v1 recorded only same-origin non-GET fetch calls and captured nothing,
+ * so this version widens on every axis that could have been the reason:
+ *
+ *   - all hosts, not just the page's own (the API may be on another subdomain)
+ *   - XHR as well as fetch (axios and friends use XHR)
+ *   - GET as well as writes (just loading a card reveals the API shape)
+ *   - persisted to sessionStorage, so an in-app navigation does not lose it
+ *
+ * Analytics and error-reporting hosts are filtered out, which is what keeps
+ * the output readable.
  *
  *   1. Open the board, Cmd+Option+J for the console
  *   2. Paste this whole file, press enter
- *   3. Create a throwaway card
+ *      (if Chrome blocks it, type `allow pasting` first)
+ *   3. Click into any card — or create a throwaway one
  *   4. Run:  copy(JSON.stringify(__orbitCapture, null, 2))
- *   5. Paste the result (it is on your clipboard)
  *
- * Reverted by reloading the page.
+ * Header VALUES are never recorded, so no token or cookie can end up in the
+ * output. Response bodies ARE recorded, truncated to 800 characters — enough
+ * to show the JSON shape. Those may contain real card data, so skim before
+ * sharing. Reloading the page removes the patch; sessionStorage.removeItem
+ * ('__orbitCapture') clears what it collected.
  */
 (() => {
-  const HOST = location.host;
-  const MAX = 4000;
-  const log = (window.__orbitCapture = []);
+  const IGNORE =
+    /google-analytics|googletagmanager|doubleclick|gstatic|sentry|datadoghq|posthog|segment|intercom|launchdarkly|hotjar|fullstory|newrelic|cloudflareinsights/;
+  const KEY = '__orbitCapture';
+  const BODY_MAX = 3000;
+  const RESPONSE_MAX = 800;
 
-  const sameHost = (url) => {
+  let stored = [];
+  try {
+    stored = JSON.parse(sessionStorage.getItem(KEY) || '[]');
+  } catch {
+    /* corrupt or unavailable storage — start fresh */
+  }
+  const log = (window.__orbitCapture = stored);
+
+  const persist = () => {
     try {
-      return new URL(url, location.href).host === HOST;
+      sessionStorage.setItem(KEY, JSON.stringify(log.slice(-80)));
     } catch {
-      return false;
+      /* quota or private mode — in-memory capture still works */
     }
+  };
+
+  const record = (entry) => {
+    if (!entry.url || IGNORE.test(entry.url)) return;
+    log.push(entry);
+    persist();
+    console.log(`[cap] ${entry.method} ${entry.url} → ${entry.status}`);
   };
 
   const headerNames = (headers) => {
     const names = [];
     try {
       if (!headers) return names;
-      if (typeof headers.forEach === 'function' && !Array.isArray(headers)) {
-        headers.forEach((_value, key) => names.push(key));
-      } else if (Array.isArray(headers)) {
-        headers.forEach(([key]) => names.push(key));
-      } else {
-        Object.keys(headers).forEach((key) => names.push(key));
-      }
+      if (Array.isArray(headers)) headers.forEach(([key]) => names.push(key));
+      else if (typeof headers.forEach === 'function') headers.forEach((_v, k) => names.push(k));
+      else Object.keys(headers).forEach((key) => names.push(key));
     } catch {
-      /* header shape we do not recognise — names are a nicety, not critical */
+      /* unrecognised header shape — names are a nicety, not critical */
     }
     return names;
   };
 
   const originalFetch = window.fetch;
   window.fetch = async function patchedFetch(...args) {
-    // Read the request shape without constructing or cloning a Request: doing
-    // either can mark the caller's body as used and break the app.
+    // Read the shape from the arguments rather than constructing or cloning a
+    // Request: either can mark the caller's body as used and break the page.
     const input = args[0];
     const init = args[1] || {};
     const url = typeof input === 'string' ? input : (input && input.url) || '';
     const method = String(init.method || (input && input.method) || 'GET').toUpperCase();
-    const body = typeof init.body === 'string' ? init.body : null;
-    const headers = headerNames(init.headers || (input && input.headers));
+    const requestBody = typeof init.body === 'string' ? init.body.slice(0, BODY_MAX) : null;
+    const requestHeaderNames = headerNames(init.headers || (input && input.headers));
 
     const response = await originalFetch.apply(this, args);
 
-    if (method !== 'GET' && sameHost(url)) {
-      let responseBody = null;
-      try {
-        responseBody = (await response.clone().text()).slice(0, MAX);
-      } catch {
-        /* opaque or already-consumed response */
-      }
-      log.push({
-        via: 'fetch',
-        method,
-        url,
-        requestHeaderNames: headers,
-        requestBody: body ? body.slice(0, MAX) : null,
-        status: response.status,
-        response: responseBody,
-      });
-      console.log(`[orbit-capture] ${method} ${url} → ${response.status}`);
+    let responseBody = null;
+    try {
+      responseBody = (await response.clone().text()).slice(0, RESPONSE_MAX);
+    } catch {
+      /* opaque or streamed response */
     }
 
+    record({
+      via: 'fetch',
+      method,
+      url,
+      requestHeaderNames,
+      requestBody,
+      status: response.status,
+      response: responseBody,
+    });
     return response;
   };
 
@@ -88,26 +109,25 @@
 
   XMLHttpRequest.prototype.send = function patchedSend(body) {
     const cap = this.__orbitCap;
-    if (cap && cap.method !== 'GET' && sameHost(cap.url)) {
-      this.addEventListener('load', () => {
-        log.push({
+    if (cap) {
+      this.addEventListener('load', () =>
+        record({
           via: 'xhr',
           method: cap.method,
           url: cap.url,
           requestHeaderNames: [],
-          requestBody: typeof body === 'string' ? body.slice(0, MAX) : null,
+          requestBody: typeof body === 'string' ? body.slice(0, BODY_MAX) : null,
           status: this.status,
-          response: String(this.responseText || '').slice(0, MAX),
-        });
-        console.log(`[orbit-capture] ${cap.method} ${cap.url} → ${this.status}`);
-      });
+          response: String(this.responseText || '').slice(0, RESPONSE_MAX),
+        }),
+      );
     }
     return originalSend.call(this, body);
   };
 
   console.log(
-    '%c[orbit-capture] recording',
+    '%c[orbit-capture v2] recording',
     'color:#0a7;font-weight:bold',
-    '— create a test card, then run: copy(JSON.stringify(__orbitCapture, null, 2))',
+    `— ${log.length} entries carried over. Click into a card, then run: copy(JSON.stringify(__orbitCapture, null, 2))`,
   );
 })();
