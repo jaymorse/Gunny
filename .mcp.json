@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "n8n": {
+      "type": "http",
+      "url": "https://gravitee.app.n8n.cloud/mcp-server/http"
+    }
+  }
+}
